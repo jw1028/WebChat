@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link href="css/local.google.fonts.css" rel="stylesheet">
+  <link href="css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="css/vuetify.min.css" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <title>在线聊天</title>
+  <style>
+    .footer{ left:0px; position:fixed; width:100%; height:100px; background-color:#000; color:#FFF; text-align:center; font-size:18px; font-weight:bold; bottom:0px;}
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <v-navigation-drawer v-model="drawer" app>
+      <v-list dense v-show="!login.isLogin">
+        <v-list-item link>
+          <v-list-item-action>
+            <v-icon>mdi-account-plus</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>注册</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link v-on:click="login.showLoginDialog=true">
+          <v-list-item-action>
+            <v-icon>mdi-login</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>登陆</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+
+      <v-list dense v-show="login.isLogin">
+        <v-list-item link>
+          <v-list-item-action>
+            <v-icon>mdi-account</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>{{user.nickName}} 您好!</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item link v-on:click="logout()">
+          <v-list-item-action>
+            <v-icon>mdi-logout</v-icon>
+          </v-list-item-action>
+          <v-list-item-content>
+            <v-list-item-title>退出登陆</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+
+    <v-app>
+      <v-app-bar app color="black" dark>
+        <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
+        <v-toolbar-title>在线聊天室</v-toolbar-title>
+        <v-spacer></v-spacer>
+        <v-btn icon v-show="status=='MessageList'" v-on:click="status='ChannelList'">
+          <v-icon>mdi-arrow-left</v-icon>
+        </v-btn>
+      </v-app-bar>
+      <v-content>
+        <v-container v-show="login.isLogin && status=='ChannelList'">
+          <v-list rounded>
+            <v-subheader>频道列表</v-subheader>
+            <v-list-item-group color="primary">
+              <v-list-item v-for="channel in channels" v-on:click="showMessage(channel.channelId)">
+                <v-list-item-icon>
+                  <v-icon>mdi-account</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title v-text="channel.channelName"></v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-container>
+
+        <v-container v-show="login.isLogin && status=='MessageList'">
+          <!-- 此处为消息显示区 -->
+          <v-row v-for="message in curChannelMessages">
+            <v-col>
+              <v-card class="ml-2" max-width="70%" outlined>
+                <v-list-item two-line>
+                  <v-list-item-content>
+                    <v-list-item-title class="mb-1">{{message.nickName}}  {{message.sendTime}}</v-list-item-title>
+                    <v-list-item-subtitle>{{message.content}}</v-list-item-subtitle>
+                  </v-list-item-content>
+                </v-list-item>
+              </v-card>
+            </v-col>
+          </v-row>
+
+          <!-- 这个 footer 对应发送消息的编辑窗口和发送按钮 -->
+          <v-footer
+            fixed
+            class="font-weight-medium" 
+            height="200px"
+          >
+            <v-container>
+              <v-row align="stretch">
+                <v-col md="8" offset-md="2">
+                  <v-textarea v-model="curInputMessage" outlined class="mx-2"
+                    label="请输入要发送的消息"
+                    rows="5"
+                    no-resize
+                    height="100%" width="100%">
+                  </v-textarea>
+                </v-col>
+                <v-col md="2">
+                  <v-btn height="80%" width="100%" color="primary" v-on:click="sendMessage()">发送</v-btn>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-footer>
+
+        </v-container>
+
+        <v-row v-show="!login.isLogin">
+          <v-col><v-card class="pa-2 text-center">请先登陆!</v-card></v-col>
+        </v-row>
+
+        <v-row justify="center">
+          <v-dialog v-model="login.showLoginDialog" persistent max-width="400px">
+            <v-card>
+              <v-card-title>
+                <span class="headline">登陆</span>
+              </v-card-title>
+              <v-card-text>
+                <v-container>
+                  <v-row>
+                    <v-col cols="12" sm="12">
+                      <v-text-field label="用户名*" v-model="login.inputUsername" required></v-text-field>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col cols="12" sm="12">
+                      <v-text-field label="密码*" v-model="login.inputPassword" required></v-text-field>
+                    </v-col>
+                  </v-row>
+                  <v-row>
+                    <v-col cols="12" sm="6">
+                      <v-btn color="primary" block v-on:click="loginAccount()">登陆</v-btn>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-btn color="primary" block v-on:click="login.showLoginDialog = false">取消</v-btn>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card-text>
+            </v-card>
+          </v-dialog>
+        </v-row>
+      </v-content>
+    </v-app>
+  </div>
+
+  <script src="js/vue.js"></script>
+  <script src="js/vuetify.js"></script>
+  <!--script src="https://unpkg.com/axios/dist/axios.min.js"></script-->
+  <script src="js/jquery-1.11.0.min.js"></script>
+
+  <script>
+    let app = new Vue({
+      el: '#app',
+      data: {
+        websocket: null, // 表示 websocket 对象
+        sheet: true,
+        drawer: null,
+        status: "ChannelList", // 取值: ChannelList, MessageList
+        // 用于辅助实现登陆
+        login: {
+          isLogin: false,
+          showLoginDialog: false,
+          inputUsername: "",
+          inputPassword: "",
+        },
+        user: {
+          // name: 'test',
+          // nickName: '蔡徐坤',
+          // signature: '我擅长唱跳 rap 篮球',
+        },
+        channels: [
+          // {
+          //   "channelId": 1,
+          //   "channelName": "明星八卦",
+          // },
+          // {
+          //   "channelId": 2,
+          //   "channelName": "电子竞技",
+          // }
+        ],
+        messages: [
+          // {
+          //   messageId: 1,
+          //   userId: 1,
+          //   nickName: "蔡徐坤1",
+          //   channelId: 1,
+          //   content: "test",
+          //   sendTime: "2020-06-16 13:00:05",
+          // },
+          // {
+          //   messageId: 2,
+          //   userId: 1,
+          //   nickName: "蔡徐坤2",
+          //   channelId: 2,
+          //   content: "test2",
+          //   sendTime: "2020-06-16 13:00:05",
+          // },
+          // {
+          //   messageId: 3,
+          //   userId: 2,
+          //   nickName: "蔡徐坤3",
+          //   channelId: 2,
+          //   content: "test3",
+          //   sendTime: "2020-06-16 13:00:05",
+          // },
+        ],
+        curChannelMessages: [
+
+        ],
+        curInputMessage: "",
+        curChannelId: null
+      },
+      methods: {
+        loginAccount() {
+          console.log("login");
+          $.ajax({
+            url: 'login',
+            type: 'post',
+            contentType: 'application/json',
+            data: JSON.stringify({
+              name: app.login.inputUsername,
+              password: app.login.inputPassword,
+            }),
+            success: function(data, status) {
+              if (!data.ok) {
+                alert('登陆失败! ' + data.reason);
+                app.login.isLogin = false;
+                return;
+              }
+              app.user.userId = data.userId;
+              app.user.name = data.name;
+              app.user.nickName = data.nickName;
+              app.user.signature = data.signature;
+              app.login.isLogin = true;
+              app.login.showLoginDialog = false;
+
+              app.getChannels();
+              app.initWebSocket();
+            }
+          })
+        },
+        logout() {
+          console.log("logout");
+          app.login.isLogin = false;
+          app.user.name = null;
+          $.ajax({
+            url: 'logout',
+            type: 'get',
+            success: function(data, status) {
+              window.location.reload();
+            }
+          });
+        },
+        showMessage(channelId) {
+          // 针对 message 中的数据进行筛选
+          this.curChannelMessages = this.messages.filter((message, i) => {
+            if (message.channelId == channelId) {
+              return true;
+            }
+            return false;
+          });
+          this.curChannelId = channelId;
+          this.status = 'MessageList';
+        },
+        checkLogin() {
+          // 页面最初加载时先访问服务器判定自身的登陆状态. 
+          console.log("checkLogin");
+          $.ajax({
+            url: 'login',
+            type: 'get',
+            success: function(data, status) {
+              if (!data.ok) {
+                // 未登录
+                app.login.isLogin = false;
+                app.user = {};
+                return;
+              }
+              // 已经登陆
+              app.login.isLogin = true;
+              app.user.userId = data.userId;
+              app.user.name = data.name;
+              app.user.nickName = data.nickName;
+              app.user.signature = data.signature;
+
+              app.getChannels();
+              app.initWebSocket();
+            }
+          });
+        },
+        sendMessage() {
+          let message = {
+            userId: this.user.userId,
+            nickName: this.user.nickName,
+            channelId: this.curChannelId,
+            content: this.curInputMessage,
+          }
+          this.websocket.send(JSON.stringify(message));
+          console.log("send success! " + message.content);
+          this.curInputMessage = "";
+        },
+        initWebSocket() {
+          // 登陆成功后, 初始化 WebSocket 对象
+          if('WebSocket' in window){
+            this.websocket = new WebSocket("ws://localhost:8080/java_chatroom/message/" + this.user.userId);
+            console.log("link success")
+          }else{
+              alert('Not support websocket')
+          }
+           //连接发生错误的回调方法
+          this.websocket.onerror = function () {
+            alert("连接发生错误!");
+          };
+
+          //连接成功建立的回调方法
+          this.websocket.onopen = function (event) {
+            console.log("连接建立成功");
+          }
+
+          //接收到消息的回调方法
+          this.websocket.onmessage = function (event) {
+            console.log("recv success! " + event.data);
+            let message = JSON.parse(event.data);
+            // let length = app.messages.length;
+            // app.messages[length] = message;
+            app.messages.push(message);
+            // 不要忘了需要筛选指定的消息
+            app.curChannelMessages = app.messages.filter((message, i) => {
+              if (message.channelId == app.curChannelId) {
+                return true;
+              }
+              return false;
+            });
+          }
+
+          //连接关闭的回调方法
+          this.websocket.onclose = function () {
+            console.log("服务器断开连接");
+          }
+
+          //监听窗口关闭事件，当窗口关闭时，主动去关闭websocket连接，防止连接还没断开就关闭窗口，server端会抛异常。
+          window.onbeforeunload = function () {
+            console.log("客户端断开连接");
+            websocket.close();
+          }
+        },
+        getChannels() {
+          $.ajax({
+            type: "get",
+            url: "channel",
+            success: function(body, status) {
+              if(body.ok)
+                app.channels = body.data;
+              else
+                alert(body.reason)
+            }
+          })
+        }
+      },
+      vuetify: new Vuetify(),
+    });
+    app.checkLogin();
+  </script>
+</body>
+</html>
