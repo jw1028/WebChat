@@ -15,5 +15,6 @@ public class Response {
     private boolean ok;
     //操作失败时，前端要展示的错误信息
     private String reason;
-    private Object data;//保存业务数据
+    //保存业务数据
+    private Object data;
 }

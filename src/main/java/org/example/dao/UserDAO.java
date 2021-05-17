@@ -47,4 +47,8 @@ public class UserDAO {
             Util.close(c, ps, rs);
         }
     }
+
+    public static int updateLastLogout(Integer userId) {
+        return 1;
+    }
 }
