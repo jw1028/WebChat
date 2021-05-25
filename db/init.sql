@@ -12,10 +12,10 @@ create table user (userId int primary key auto_increment,
                    lastLogout DateTime -- 上次登录时间
 ); -- 个性签名
 
-insert into user values(null, 'test', '123', '蔡徐坤', '', '我擅长唱', now());
-insert into user values(null, 'test2', '123', '蔡徐坤2', '', '我擅长跳', now());
-insert into user values(null, 'test3', '123', '蔡徐坤3', '', '我擅长rap', now());
-insert into user values(null, 'test4', '123', '蔡徐坤4', '', '我擅长篮球', now());
+insert into user values(null, 'test', '123', '张三', '', '我擅长唱', now());
+insert into user values(null, 'test2', '123', '李四', '', '我擅长跳', now());
+insert into user values(null, 'test3', '123', '王二麻子', '', '我擅长rap', now());
+insert into user values(null, 'test4', '123', '科比', '', '我擅长篮球', now());
 
 
 
@@ -33,9 +33,6 @@ create table message (messageId int primary key auto_increment,
                       userId int, -- 谁发的
                       channelId int, -- 发到哪个频道中
                       content text, -- 消息内容是啥
-                      sendTime DateTime default now()    -- 发送时间
+                      sendTime TIMESTAMP default now() ,   -- 发送时间
+                      foreign key userId references user(userId)
 );
-
-insert into message values (null, 1, 1, 'hehe1', now());
-insert into message values (null, 1, 1, 'hehe2', now());
-insert into message values (null, 1, 1, 'hehe3', now());
