@@ -244,30 +244,7 @@
         // }
       ],
       messages: [
-        // {
-        //   messageId: 1,
-        //   userId: 1,
-        //   nickName: "蔡徐坤1",
-        //   channelId: 1,
-        //   content: "test",
-        //   sendTime: "2020-06-16 13:00:05",
-        // },
-        // {
-        //   messageId: 2,
-        //   userId: 1,
-        //   nickName: "蔡徐坤2",
-        //   channelId: 2,
-        //   content: "test2",
-        //   sendTime: "2020-06-16 13:00:05",
-        // },
-        // {
-        //   messageId: 3,
-        //   userId: 2,
-        //   nickName: "蔡徐坤3",
-        //   channelId: 2,
-        //   content: "test3",
-        //   sendTime: "2020-06-16 13:00:05",
-        // },
+
       ],
       curChannelMessages: [
 
@@ -390,7 +367,7 @@
       initWebSocket() {
         // 登陆成功后, 初始化 WebSocket 对象
         if('WebSocket' in window){
-          this.websocket = new WebSocket("ws://localhost:8080/java_chatroom/message/" + this.user.userId);
+          this.websocket = new WebSocket("ws://152.136.212.133:8080/WebChat/message/" + this.user.userId);
           console.log("link success")
         }else{
           alert('Not support websocket')
