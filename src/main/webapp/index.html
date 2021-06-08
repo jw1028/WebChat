@@ -80,7 +80,7 @@
         </v-list>
       </v-container>
 
-      <v-container v-show="login.isLogin && status=='MessageList'">
+      <v-container v-show="login.isLogin && status=='MessageList'" style = "height: calc(100% - 200px);overflow : auto">
         <!-- 此处为消息显示区 -->
         <v-row v-for="message in curChannelMessages">
           <v-col>
