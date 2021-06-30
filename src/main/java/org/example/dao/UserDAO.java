@@ -4,19 +4,42 @@ import org.example.exception.AppException;
 import org.example.model.User;
 import org.example.util.Util;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
+import java.sql.*;
 import java.util.Date;
 
 public class UserDAO {
 
+    /**
+     *添加用户
+     */
+    public void addUser(User u) {
+        Connection c = null;
+        PreparedStatement ps = null;
+        try {
+            c = Util.getConnection();
+            String sql = "insert into user values(null, ?, ?, ?, '', ?, now())";
+            ps = c.prepareStatement(sql);
+            ps.setString(1, u.getName());
+            ps.setString(2, u.getPassword());
+            ps.setString(3, u.getNickName());
+            ps.setString(4, u.getSignature());
+            ps.executeUpdate();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        } finally {
+            Util.close(c, ps);
+        }
+    }
+
+    /**
+     *根据账号查询用户
+     */
     public static User queryByName(String name) {
         Connection c = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         //定义返回数据
-        User u = null;
+        User user = null;
         try {
             //1 获取数据库连接Connection
             c = Util.getConnection();
@@ -28,18 +51,18 @@ public class UserDAO {
             rs = ps.executeQuery();
             //4 如果是查询操作，处理结果集
             while (rs.next()){//移动到下一行，有数据返回true
-                u = new User();
+                user = new User();
                 //设置结果集字段到用户对象的属性中
-                u.setUserId(rs.getInt("userId"));
-                u.setName(name);
-                u.setPassword(rs.getString("password"));
-                u.setNickName(rs.getString("nickName"));
-                u.setIconPath(rs.getString("iconPath"));
-                u.setSignature(rs.getString("signature"));
-                java.sql.Timestamp lastLogout = rs.getTimestamp("lastLogout");
-                u.setLastLogout(new Date(lastLogout.getTime()));
+                user.setUserId(rs.getInt("userId"));
+                user.setName(name);
+                user.setPassword(rs.getString("password"));
+                user.setNickName(rs.getString("nickName"));
+                user.setIconPath(rs.getString("iconPath"));
+                user.setSignature(rs.getString("signature"));
+                Timestamp lastLogout = rs.getTimestamp("lastLogout");
+                user.setLastLogout(new Date(lastLogout.getTime()));
             }
-            return u;
+            return user;
         }catch (Exception e){
             throw new AppException("查询用户账号出错", e);
         }finally {
@@ -49,6 +72,19 @@ public class UserDAO {
     }
 
     public static int updateLastLogout(Integer userId) {
-        return 1;
+        Connection c = null;
+        PreparedStatement ps = null;
+        try{
+            c = Util.getConnection();
+            String sql = "update user set lastLogout=? where userId=?";
+            ps = c.prepareStatement(sql);
+            ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+            ps.setInt(2, userId);
+            return ps.executeUpdate();
+        }catch (Exception e){
+            throw new AppException("修改用户上次登录时间出错", e);
+        }finally {
+            Util.close(c, ps);
+        }
     }
 }
