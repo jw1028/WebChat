@@ -166,24 +166,30 @@
               <v-container>
                 <v-row>
                   <v-col cols="12" sm="12">
-                    <v-text-field label="用户名*" v-model="registerForm.inputUsername" required></v-text-field>
+                    <v-text-field id = "用户名" label="用户名*" v-model="registerForm.inputUsername" required="true"></v-text-field>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12" sm="12">
-                    <v-text-field label="密码*" v-model="registerForm.inputPassword" required></v-text-field>
+                    <v-text-field id = "密码" label="密码*" v-model="registerForm.inputPassword1" required="true"></v-text-field>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12" sm="12">
-                    <v-text-field label="昵称*" v-model="registerForm.inputNickName" required></v-text-field>
+                    <v-text-field id = "确认密码" label="确认密码*" v-model="registerForm.inputPassword2" required="true"></v-text-field>
                   </v-col>
                 </v-row>
                 <v-row>
                   <v-col cols="12" sm="12">
-                    <v-text-field label="特长*" v-model="registerForm.inputSignature" required></v-text-field>
+                    <v-text-field id = "昵称" label="昵称*" v-model="registerForm.inputNickName" required="true"></v-text-field>
                   </v-col>
                 </v-row>
+                <v-row>
+                  <v-col cols="12" sm="12">
+                    <v-text-field id = "特长" label="特长*" v-model="registerForm.inputSignature" required="true"></v-text-field>
+                  </v-col>
+                </v-row>
+
                 <v-row>
                   <v-col cols="12" sm="6">
                     <v-btn color="primary" block v-on:click="register()">注册</v-btn>
@@ -224,7 +230,8 @@
       registerForm: {
         showDialog: false,
         inputUsername: "",
-        inputPassword: "",
+        inputPassword1: "",
+        inputPassword2: "",
         inputNickName: "",
         inputSignature: "",
       },
@@ -282,13 +289,55 @@
         })
       },
       register(){
+        var username = jQuery("#用户名");
+        var password1 = jQuery("#密码");
+        var password2 = jQuery("#确认密码");
+        var nickname = jQuery("#昵称");
+
+        if (username.val().trim() == "" ) {
+          alert("请先输入用户名！");
+          title.focus();
+          return false;
+        }
+        if(username.val().length > 6){
+          alert("用户名长度需要小于6位");
+          title.focus();
+          return false;
+        }
+        if (password1.val().trim() == "" ) {
+          alert("请先输入密码！");
+          title.focus();
+          return false;
+        }
+        if (password2.val().trim() == "" ) {
+          alert("请确认密码！");
+          title.focus();
+          return false;
+        }
+        if(password1.val().length <= 2){
+          alert("密码长度需要大于2位");
+          title.focus();
+          return false;
+        }
+        if(password1.val() != password2.val()){
+          alert("两次密码不同");
+          title.focus();
+          return false;
+        }
+
+          if (nickname.val().trim() == "") {
+            alert("请先输入昵称！");
+            title.focus();
+            return false;
+          }
+
         $.ajax({
           url: 'register',
           type: 'post',
           contentType: 'application/json',
           data: JSON.stringify({
             name: app.registerForm.inputUsername,
-            password: app.registerForm.inputPassword,
+            password1: app.registerForm.inputPassword1,
             nickName: app.registerForm.inputNickName,
             signature: app.registerForm.inputSignature,
           }),
@@ -296,6 +345,8 @@
             if (!data.ok) {
               alert('注册失败! ' + data.reason);
               return;
+            }else {
+              alert("注册成功!");
             }
             app.registerForm.showDialog = false;
             app.login.showLoginDialog = true;
@@ -367,7 +418,7 @@
       initWebSocket() {
         // 登陆成功后, 初始化 WebSocket 对象
         if('WebSocket' in window){
-          this.websocket = new WebSocket("ws://152.136.212.133:8080/WebChat/message/" + this.user.userId);
+          this.websocket = new WebSocket("ws://localhost:8080/WebChat/message/" + this.user.userId);
           console.log("link success")
         }else{
           alert('Not support websocket')
