@@ -1,0 +1,57 @@
+package org.example.servlet;
+
+import org.example.dao.ChannelDAO;
+import org.example.exception.AppException;
+import org.example.model.Channel;
+import org.example.model.Response;
+import org.example.util.Util;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * 新增频道
+ */
+@WebServlet("/channelAdd")
+public class ChannelAddServlet extends HttpServlet {
+    static class Request{
+        public String addName;
+    }
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("application/json");
+        Request request = Util.deserialize(req.getInputStream(), Request.class);
+        Response response = new Response();
+        try{
+            String name = request.addName;
+            Channel exit = ChannelDAO.queryByName(name);
+            if(exit != null) {
+                response.setOk(false);
+                response.setReason("新增的频道已存在列表中");
+            }else {
+                Channel channel = new Channel();
+                channel.setChannelName(name);
+                int n = ChannelDAO.addChannel(channel);
+                //ok:true, data: [{}, {}]
+                response.setOk(true);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            //目前，前端的实现，在后端报错，要返回空的List
+            response.setOk(false);
+            if(e instanceof AppException) {
+                response.setReason(e.getMessage());
+            }else {
+                response.setReason("未知的错误,请联系管理员");
+            }
+        }
+        //3 返回响应数据: 从响应对象获取输出流，打印输出到响应体body
+        resp.getWriter().println(Util.serialize(response));
+    }
+}
