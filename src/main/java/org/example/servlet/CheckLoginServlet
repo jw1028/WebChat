@@ -1,0 +1,44 @@
+package org.example.servlet;
+
+import org.example.model.User;
+import org.example.util.Util;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.io.IOException;
+
+/**
+ * 检查登录类
+ */
+@WebServlet("/checkLogin")
+public class CheckLoginServlet extends HttpServlet {
+    //检测登录状态接口：页面初始化时执行
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        req.setCharacterEncoding("UTF-8");
+        resp.setCharacterEncoding("UTF-8");
+        resp.setContentType("application/json");
+        //返回的数据，还是用户信息
+        User u = new User();
+        //获取当前请求的session，并再获取用户信息，如果获取不到，返回ok:false
+        HttpSession session = req.getSession(false);
+        if(session != null){
+            User get = (User) session.getAttribute("user");
+            if(get != null){
+                //已经登录，并获取到用户信息
+                u = get;
+                u.setOk(true);
+                resp.getWriter().println(Util.serialize(u));
+                return;
+            }
+        }
+        u.setOk(false);//其实不用设置，该字段为boolean，默认就是false
+        u.setReason("用户未登陆");
+        //3 返回响应数据: 从响应对象获取输出流，打印输出到响应体body
+        resp.getWriter().println(Util.serialize(u));
+    }
+}
